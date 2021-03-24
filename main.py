@@ -142,11 +142,11 @@ async def on_message(message):
 
   def linkToString(link):
     string = ""
-    pingRole = None
+    pingRole = "(role not found)"
     for role in msg.guild.roles:
-      if str(role.id) == str(link[0]): pingRole = role
+      if str(role.id) == str(link[0]): pingRole = role.name
     string += "@"
-    string += pingRole.name+" "
+    string += pingRole+" "
     string += link[2]+" " #teacher
     code = link[1][len(link[1])-10:]
     if code[0] == "/": code = code[1:] #meet code may be only 9 chars long apparently ?
