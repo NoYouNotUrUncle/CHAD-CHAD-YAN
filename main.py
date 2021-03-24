@@ -76,7 +76,7 @@ async def startDriver(): #start a new driver and log in to gapps
   global driver
   #open chrome
   driver = webdriver.Chrome(options=browser_options)
-  driver.set_page_load_timeout(10) #restart driver after 10s of monkeying (cus google block prolly!)
+  driver.set_page_load_timeout(5) #restart driver after 5s of monkeying (cus google block prolly!)
   #go to google.yrdsb.ca and log in
   driver.get("https://google.yrdsb.ca/EasyConnect/SSO/Redirect.aspx?SAMLRequest=fVLLTuswEN0j8Q%2BR93myqawmqBeEbiUeEQ0s7s51pqlvbE%2FwOC38PW5KBSxge3zmPMYzv3w1OtqBI4W2ZHmSsQisxFbZrmRPzU08Y5fV%2BdmchNEDX4x%2Bax%2FhZQTyUZi0xKeHko3OchSkiFthgLiXfLW4u%2BVFkvHBoUeJmkXL65Jtdata0KIfuu1GGAM9ygGtlbJfYw92bdD0%2F9vAfj7FKg6xlkQjLC15YX2AsiKPs4s4nzVZxosLXsz%2Bsaj%2BcPqj7LHBb7HWRxLxv01Tx%2FXDqpkEdiGduw%2FsknWInYZEojnY14JI7QK8EZqARQsicD4EvEJLowG3ArdTEp4eb0NL7wfiabrf75NPmVSknRgGSt5cS%2BtEilRIYtW0XT4VdF%2FW%2Bnt8cbJn1afBPP0iVX382qHM8rpGreRbtNAa91cOhA9NvBtDkRt0Rvif3fIknxDVxpuJykdLA0i1UdCyKK2Ort%2FPIxzNOw%3D%3D&RelayState=https%3A%2F%2Fwww.google.com%2Fa%2Fgapps.yrdsb.ca%2FServiceLogin%3Fservice%3Dwise%26passive%3Dtrue%26continue%3Dhttps%253A%252F%252Fdrive.google.com%252Fa%252Fgapps.yrdsb.ca%252F%26followup%3Dhttps%253A%252F%252Fdrive.google.com%252Fa%252Fgapps.yrdsb.ca%252F%26faa%3D1")
   print("at login page")
@@ -98,6 +98,8 @@ end = False
 @client.event
 async def on_message(message):
   global end
+  global openClasses
+  global driver
 
   if message.author.bot: return #don't reply to bots (including self)
 
@@ -118,21 +120,37 @@ async def on_message(message):
       embed.add_field(name="Add a new link",value="`add link [link] [role mention] [period] [teacher]` will add a link tied to the current channel, set to ping at the given period. E.G. `add link https://meet.google.com/lookup/cj2ciiqgqc @role 3 ur mom lol`",inline=False)
       embed.add_field(name="View current links",value="`view links` allows you to see the schedule and links setup for this channel.",inline=False)
       embed.add_field(name="Delete a link",value="`delete [link]` will delete the given link from the schedule. E.G. `delete cj2ciiqgqc`",inline=False)
+      embed.add_field(name="Drop a link from the queue",value="`drop [link]` will cause the bot to stop checking if a given link is online. E.G. `drop cj2ciiqgqc`",inline=False)
       embed.add_field(name="View the bot's link queue",value="`view queue` will show all the links in this channel that the bot is working through. ")
       embed.add_field(name="Get bot invite link",value="`lemme innnnnnnnnn` will provide you with a link to invite the bot to your server.")
       embed.add_field(name="Restart the bot",value="`go commit die` restarts the bot if you are an admin.")
       await message.channel.send(embed=embed)
     else: await message.channel.send("If you wanna learn how to get <:pingo:822111531063836712>s, use `pingo help pls`.")
 
-  #invite upon "lemme in"
+  #drop a link from the queue
+  if len(tokens) >= 2 and tokens[0] == "drop" and re.search(r"^[a-z0-9]{9,10}$",tokens[1]):
+    link = None
+    for curLink in linkQueue[key]:
+      if curLink[1] == "https://meet.google.com/lookup/" + tokens[1]:  # link matches code
+        link = curLink
+    if link is None:
+      await ch.send("Link not found in queue.")
+    else:
+      links[key].remove(link)
+      openClasses = openClasses-1
+      if openClasses == 0: driver.close()
+      await ch.send("dropped link to " + link[2] + "'s class from the queue.")
+
+  #invite upon "lemme in" or weird variations like "leeeeeeeeeemmmmmmmeeeeeeeee innnnnn plssss"
   if len(tokens) >= 2 and "le" in tokens[0] and "me" in tokens[0] and "in" in tokens[1]:
     await ch.send("rrreeeeeeeeeeeeeeeeeeeeeeeeeeeee fiiiiiiiinnnnnnnneeeeeeeeee")
     await ch.send("https://discord.com/api/oauth2/authorize?client_id=815267324973023234&permissions=8&scope=bot")
 
+  #restart the bot
   if len(tokens) >= 3 and tokens[:3] == ["go","commit","die"]:
-    if msg.author.id not in admins:
+    if msg.author.id not in admins: #lol
       await ch.send("ur mom lol")
-    else:
+    else: #restart
       pingChannel["channel"] = key
       cache()
       await msgCh("<:eyy:780873307913191447> EASIEST WAY TO GET OUT OF A PHYSICS IA",int(key))
@@ -165,7 +183,7 @@ async def on_message(message):
 
   #delete a link based on the code given in view link
   if len(tokens) >= 2 and tokens[0] == "delete":
-    if re.search("[a-z0-9]{9,10}",tokens[1]):# check regex for the code
+    if re.search(r"^[a-z0-9]{9,10}$",tokens[1]):# check regex for the code
       period = None
       link = None
       for i in range(4):
@@ -346,7 +364,7 @@ async def on_ready():
       for link in finishedLinks: # remove finished links from queue
         linkQueue[key].remove(link)
         openClasses = openClasses-1
-        if openClasses == 0:
+        if openClasses == 0: #close driver if all done
           driver.close()
           driver = None
 
