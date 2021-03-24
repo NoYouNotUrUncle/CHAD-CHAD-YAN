@@ -124,8 +124,8 @@ async def on_message(message):
       embed.add_field(name="View the bot's link queue",value="`view queue` will show all the links in this channel that the bot is working through. ")
       embed.add_field(name="Get bot invite link",value="`lemme innnnnnnnnn` will provide you with a link to invite the bot to your server.")
       embed.add_field(name="Restart the bot",value="`go commit die` restarts the bot if you are an admin.")
-      await message.channel.send(embed=embed)
-    else: await message.channel.send("If you wanna learn how to get <:pingo:822111531063836712>s, use `pingo help pls`.")
+      await ch.send(embed=embed)
+    else: await ch.send("If you wanna learn how to get <:pingo:822111531063836712>s, use `pingo help pls`.")
 
   #drop a link from the queue
   if len(tokens) >= 2 and tokens[0] == "drop" and re.search(r"^[a-z0-9]{9,10}$",tokens[1]):
@@ -238,14 +238,14 @@ async def on_message(message):
               teacher = " ".join(tokens[5:])
               #add the link
               links[key][int(period)-1].append([rolePing[3:3+18],link,teacher])
-              await message.channel.send("<@&"+rolePing[3:3+18]+"> every time "+teacher+"'s class opens, you will be pinged. To opt out of this, remove the role from yourself.")
+              await ch.send("<@&"+rolePing[3:3+18]+"> every time "+teacher+"'s class opens, you will be pinged. To opt out of this, remove the role from yourself.")
               cache()
             #errors
-            else: await message.channel.send("Set up a schedule for this channel with `set times` before proceeding.")
-          else: await message.channel.send("Period not in the range 1-4. try `pingo help pls`")
-        else: await message.channel.send("Role to ping not found. try `pingo help pls`")
-      else: await message.channel.send("Not a valid google meet link. Use the link listed on classroom, not the one in your browser after you press the link. It should follow the regex `https:\/\/meet.google.com\/lookup\/[a-z0-9]{9,10}`.")
-    else: await message.channel.send("Not enough arguments given. try `pingo help pls`")
+            else: await ch.send("Set up a schedule for this channel with `set times` before proceeding.")
+          else: await ch.send("Period not in the range 1-4. try `pingo help pls`")
+        else: await ch.send("Role to ping not found. try `pingo help pls`")
+      else: await ch.send("Not a valid google meet link. Use the link listed on classroom, not the one in your browser after you press the link. It should follow the regex `https:\/\/meet.google.com\/lookup\/[a-z0-9]{9,10}`.")
+    else: await ch.send("Not enough arguments given. try `pingo help pls`")
 
   #rotate the periods by sorting their current times and then putting them in the desired order
   if len(tokens) > 0 and tokens[0] == "rotate":
@@ -259,10 +259,10 @@ async def on_message(message):
           for i in range(4): #put them in order
             times[key][periods[i]-1] = curTimeOrdered[i]
           cache()
-          await message.channel.send("shuffled periods to "+str(periods))
-        else: await message.channel.send("Set up a schedule for this channel with `set times` before proceeding.")
-      else: await message.channel.send("Invalid period permutation. Try `pingo help pls`")
-    else: await message.channel.send("Not enough arguments. Try `pingo help pls`")
+          await ch.send("shuffled periods to "+str(periods))
+        else: await ch.send("Set up a schedule for this channel with `set times` before proceeding.")
+      else: await ch.send("Invalid period permutation. Try `pingo help pls`")
+    else: await ch.send("Not enough arguments. Try `pingo help pls`")
 
   def parseTime(time): #parse time from string (return None if invalid)
     parsedTime = None
@@ -291,11 +291,11 @@ async def on_message(message):
           times[key] = [[] for i in range(4)]
           links[key] = [[] for i in range(4)]
         #overwrite schedule
-        for i in range(4): times[str(message.channel.id)][i] = newTimes[i]
+        for i in range(4): times[key][i] = newTimes[i]
         cache()
-        await message.channel.send("set the periods to the times `"+(" ".join(tokens[2:6]))+"`")
-      else: await message.channel.send("try `pingo help pls`")
-    else: await message.channel.send("try `pingo help pls`")
+        await ch.send("set the periods to the times `"+(" ".join(tokens[2:6]))+"`")
+      else: await ch.send("try `pingo help pls`")
+    else: await ch.send("try `pingo help pls`")
 
 #main thread - remains blocked until the queue has elements, at which point it works through it
 @client.event
