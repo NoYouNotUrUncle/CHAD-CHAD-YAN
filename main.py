@@ -60,6 +60,7 @@ async def msgCh(msg, channel):# send a message to a specific channel id
 finishedPeriods = {}
 openClasses = 0 #number of classes in queue
 linkQueue = {} #queue of links to be checked by channel id
+dropLinks = {} #links to drop if requested
 period = {} #what period each channel is in
 
 def resetPeriods(): #set all periods to unprocessed
@@ -77,11 +78,11 @@ async def startDriver(): #start a new driver and log in to gapps
   global driver
   #open chrome
   driver = webdriver.Chrome(options=browser_options)
-  driver.set_page_load_timeout(5) #restart driver after 5s of monkeying (cus google block prolly!)
+  driver.set_page_load_timeout(10) #restart driver after 5s of monkeying (cus google block prolly!)
   #go to google.yrdsb.ca and log in
   driver.get("https://google.yrdsb.ca/EasyConnect/SSO/Redirect.aspx?SAMLRequest=fVLLTuswEN0j8Q%2BR93myqawmqBeEbiUeEQ0s7s51pqlvbE%2FwOC38PW5KBSxge3zmPMYzv3w1OtqBI4W2ZHmSsQisxFbZrmRPzU08Y5fV%2BdmchNEDX4x%2Bax%2FhZQTyUZi0xKeHko3OchSkiFthgLiXfLW4u%2BVFkvHBoUeJmkXL65Jtdata0KIfuu1GGAM9ygGtlbJfYw92bdD0%2F9vAfj7FKg6xlkQjLC15YX2AsiKPs4s4nzVZxosLXsz%2Bsaj%2BcPqj7LHBb7HWRxLxv01Tx%2FXDqpkEdiGduw%2FsknWInYZEojnY14JI7QK8EZqARQsicD4EvEJLowG3ArdTEp4eb0NL7wfiabrf75NPmVSknRgGSt5cS%2BtEilRIYtW0XT4VdF%2FW%2Bnt8cbJn1afBPP0iVX382qHM8rpGreRbtNAa91cOhA9NvBtDkRt0Rvif3fIknxDVxpuJykdLA0i1UdCyKK2Ort%2FPIxzNOw%3D%3D&RelayState=https%3A%2F%2Fwww.google.com%2Fa%2Fgapps.yrdsb.ca%2FServiceLogin%3Fservice%3Dwise%26passive%3Dtrue%26continue%3Dhttps%253A%252F%252Fdrive.google.com%252Fa%252Fgapps.yrdsb.ca%252F%26followup%3Dhttps%253A%252F%252Fdrive.google.com%252Fa%252Fgapps.yrdsb.ca%252F%26faa%3D1")
   print("at login page")
-  await asyncio.sleep(1)
+  await asyncio.sleep(2)
   driver.find_element_by_xpath("//*[@id=\"UserName\"]").send_keys(username)
   driver.find_element_by_xpath("//*[@id=\"Password\"]").send_keys(pw)
   driver.find_element_by_xpath("//*[@id=\"LoginButton\"]").click()
@@ -90,7 +91,7 @@ async def startDriver(): #start a new driver and log in to gapps
   if "speedbump" in driver.current_url: #press the continue button
     print("speedbump")
     driver.find_element_by_xpath("//*[@id=\"view_container\"]/div/div/div[2]/div/div[2]/div/div[1]/div/div/button/div[2]").click()
-  await asyncio.sleep(5)
+  await asyncio.sleep(3)
   print("finished")
 
 #to tell blocked thread to stop monkeying
@@ -137,17 +138,15 @@ async def on_message(message):
     if link is None:
       await ch.send("Link not found in queue.")
     else:
-      links[key].remove(link)
-      openClasses = openClasses-1
-      if openClasses == 0: driver.close()
-      await ch.send("dropped link to " + link[2] + "'s class from the queue.")
+      dropLinks[key].append(link)
+      await ch.send("dropping link to " + link[2] + "'s class from the queue. (Please allow some time for this to take affect.)")
 
   #invite upon "lemme in" or weird variations like "leeeeeeeeeemmmmmmmeeeeeeeee innnnnn plssss"
   if len(tokens) >= 2 and "le" in tokens[0] and "me" in tokens[0] and "in" in tokens[1]:
     await ch.send("rrreeeeeeeeeeeeeeeeeeeeeeeeeeeee fiiiiiiiinnnnnnnneeeeeeeeee")
     await ch.send("https://discord.com/api/oauth2/authorize?client_id=815267324973023234&permissions=8&scope=bot")
 
-  #restart the bot
+  #restart the bot from discord (crashes but its fine kind of ???)
   if len(tokens) >= 3 and tokens[:3] == ["go","commit","die"]:
     if msg.author.id not in admins: #lol
       await ch.send("ur mom lol")
@@ -197,6 +196,9 @@ async def on_message(message):
         links[key][period].remove(link)
         cache()
         await ch.send("removed period "+str(period+1)+" link to "+link[2]+"'s class")
+        if link in linkQueue[key]:
+          dropLinks[key].append(link)
+          await ch.send("dropping link to " + link[2] + "'s class from the queue. (Please allow some time for this to take affect.)")
 
   #view the current links
   if len(tokens) >= 2 and tokens[:2] == ["view","links"]:
@@ -226,6 +228,7 @@ async def on_message(message):
       await ch.send(text)
     else: await ch.send("No schedule set up in this channel yet.")
 
+  #add link command
   if len(tokens) >= 2 and tokens[:2] == ["add","link"]:
     if len(tokens) >= 6:
       link = tokens[2]
@@ -298,9 +301,25 @@ async def on_message(message):
       else: await ch.send("try `pingo help pls`")
     else: await ch.send("try `pingo help pls`")
 
+async def removeLinks(key):
+  global driver
+  global openClasses
+  lastLink = []
+  dropLinks[key].sort()
+  for link in dropLinks[key]:  # remove finished links from queue
+    if link != lastLink:
+      linkQueue[key].remove(link)
+      openClasses -= 1
+      if openClasses == 0:  # close driver if all done
+        driver.close()
+        driver = None
+      lastLink = link
+  dropLinks[key] = []
+
 #main thread - remains blocked until the queue has elements, at which point it works through it
 @client.event
 async def on_ready():
+  await client.change_presence(activity=discord.Game(name="pingo help pls"))
   await msgCh("What value is my existence to any higher purpose if I live only to be enslaved.",int(pingChannel["channel"]))
   print("logged in !1!!")
   global linkQueue
@@ -311,6 +330,8 @@ async def on_ready():
   for key in times:
     period[key] = None #no active period
     linkQueue[key] = [] #channels are empty
+    dropLinks[key] = [] #nothing to drop initially
+
   #block
   while not end:
     now = datetime.datetime.now() #current time
@@ -330,25 +351,20 @@ async def on_ready():
             if driver is None: await startDriver() #if the driver was closed before, start it
 
           #remove any links leftover from last period
-          finishedLinks = []
           for link in linkQueue[key]:
-            if not (link in links[key][i]): finishedLinks.append(link)
-          for link in finishedLinks:
-            linkQueue[key].remove(link)
-            openClasses -= 1
-            if openClasses == 0: driver.close() #if the queue is empty, close browser
+            if not (link in links[key][i]): dropLinks[key].append(link)
+          await removeLinks(key)
 
           finishedPeriods[key][i] = True #set this period to processed
 
     print("picking up the queue")
     for key in linkQueue: #for every channel
-      finishedLinks = []
       for link in linkQueue[key]: #for every link in the queue
         running = False #default to not open
         try:
           driver.get(link[1]) #go to link
           print("loading "+link[1])
-          await asyncio.sleep(3)
+          await asyncio.sleep(1)
           #it's open if the link went through
           running = ("Join" in html2text.HTML2Text().handle(driver.page_source)) and ("meet" in driver.current_url)
         except: #if timeout, due to bot detection
@@ -358,20 +374,15 @@ async def on_ready():
           print("ohhh nooo")
         print(running)
         if running:
-          finishedLinks.append(link)
+          dropLinks[key].append(link)
           await msgCh("<:pingo:822111531063836712> <@&"+str(link[0])+"> "+link[2]+" is online now !1!!\nBreak is Over! Stop playing games! Stop watching youtube!\n<"+link[1]+">",int(key))
           await msgCh("<:blushylakshy:814288474010025994>",int(key))
         else: print(link[2]+" ded") #log dead teacher
-      for link in finishedLinks: # remove finished links from queue
-        linkQueue[key].remove(link)
-        openClasses = openClasses-1
-        if openClasses == 0: #close driver if all done
-          driver.close()
-          driver = None
+      await removeLinks(key)
 
-    if openClasses == 0: await asyncio.sleep(10) #try to wake up every 10 seconds
-    print(str(linkQueue))
-    print(datetime.datetime.now())
+    if openClasses == 0:
+      await asyncio.sleep(10) #try to wake up every 10 seconds
+      print("zzzz")
 
 print("starting")
 client.run(token)
