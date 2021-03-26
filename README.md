@@ -11,9 +11,9 @@ Install [chrome driver](https://chromedriver.chromium.org/) and add it to your P
 
 Download `main.py` and the provided sample `.json` files and put them in the same directory. 
 
-In `pws.json`, change the `username` field to your yrdsb student id, the `pw` field to your yrdsb password, and the `token` field to your bot token. 
+In `pws.json`, change the `username` field to your yrdsb student id, the `pw` field to your yrdsb password, and the `token` field to your discord bot token. 
 
-Copy the channel id of some channel you want the bot to initially ping upon start up, and put it under the `channel` field in `channel.json`. 
+Copy the channel id of some channel you want the bot to initially message upon start up, and put it under the `channel` field in `channel.json`. 
 
 Run `main.py`, and the bot should be ready to go. 
 
