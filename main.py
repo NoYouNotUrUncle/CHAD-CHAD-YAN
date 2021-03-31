@@ -9,12 +9,8 @@ import re
 import html2text
 
 def jsonFromFile(filePath):
-  jsonString = ""
-  file = open(filePath,"r")
-  for line in file:
-    jsonString += line
-  return json.loads(jsonString)
-  file.close()
+  with open(filePath,"r") as file:
+    return json.loads(file.read())
 
 #top secret stuff !
 pws = jsonFromFile("pws.json")
@@ -40,10 +36,8 @@ pingChannel = jsonFromFile("channel.json")
 admins = [414212931023011855]
 
 def cacheFile(obj,filePath):
-  jsonString = json.dumps(obj)
-  file = open(filePath,"w")
-  file.write(jsonString)
-  file.close()
+  with open(filePath,"w") as file:
+    file.write(json.dumps(obj))
 
 def cache():
   cacheFile(links,"links.json")
