@@ -357,7 +357,7 @@ async def on_ready():
           print("loading "+link[1])
           await asyncio.sleep(1)
           #it's open if the link went through
-          running = ("Join" in html2text.HTML2Text().handle(driver.page_source)) and ("meet" in driver.current_url)
+          running = ("Join" in html2text.HTML2Text().handle(driver.page_source)) and ("meet" in driver.current_url) or ("zoom.us" in driver.current_url)
         except: #if timeout, due to bot detection
           running = False #default to not open
           driver.close() #restart driver
