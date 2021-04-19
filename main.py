@@ -124,16 +124,15 @@ async def on_message(message):
     else: await ch.send("If you wanna learn how to get <:pingo:822111531063836712>s, use `pingo help pls`.")
 
   #drop a link from the queue
-  if len(tokens) >= 2 and tokens[0] == "drop" and re.search(r"^[a-z0-9]{9,10}$",tokens[1]):
-    link = None
+  if len(tokens) >= 2 and tokens[0] == "drop":
     for curLink in linkQueue[key]:
-      if curLink[1] == "https://meet.google.com/lookup/" + tokens[1]:  # link matches code
+      if curLink[1] == "https://meet.google.com/lookup/" + tokens[1] or curLink[1] == tokens[1]:  # link matches code
         link = curLink
-    if link is None:
-      await ch.send("Link not found in queue.")
+        dropLinks[key].append(link)
+        await ch.send("dropping link to " + link[2] + "'s class from the queue. (Please allow some time for this to take effect.)")
+        break
     else:
-      dropLinks[key].append(link)
-      await ch.send("dropping link to " + link[2] + "'s class from the queue. (Please allow some time for this to take affect.)")
+      await ch.send("Link not found in queue.")
 
   #invite upon "lemme in" or weird variations like "leeeeeeeeeemmmmmmmeeeeeeeee innnnnn plssss"
   if len(tokens) >= 2 and "le" in tokens[0] and "me" in tokens[0] and "in" in tokens[1]:
@@ -153,16 +152,14 @@ async def on_message(message):
       quit()
 
   def linkToString(link):
-    string = ""
     pingRole = "(role not found)"
     for role in msg.guild.roles:
       if str(role.id) == str(link[0]): pingRole = role.name
-    string += "@"
-    string += pingRole+" "
-    string += link[2]+" " #teacher
-    code = link[1][len(link[1])-10:]
-    if code[0] == "/": code = code[1:] #meet code may be only 9 chars long apparently ?
-    string += code+"\n"
+    code = ""
+    if not "zoom.us" in link: # skip all this weird thing for zoom i don't know what the hell it's doing
+      code = link[1][len(link[1])-10:]
+      if code[0] == "/": code = code[1:] #meet code may be only 9 chars long apparently ?
+    string = f"@{pingRole} {link[2]} {code}\n"
     return string
 
   #view the bot's queue
@@ -226,7 +223,7 @@ async def on_message(message):
   if len(tokens) >= 2 and tokens[:2] == ["add","link"]:
     if len(tokens) >= 6:
       link = tokens[2]
-      if re.search(r"^https:\/\/meet.google.com\/lookup\/[a-z0-9]{9,10}$",link): #check if the link matches the regex for a meet link
+      if re.search(r"^https:\/\/meet\.google\.com\/lookup\/[a-z0-9]{9,10}$",link) or re.search(r"^https:\/\/yrdsb-ca.zoom.us\/j\/[0-9]{11}\?pwd=.*$", link): #check if the link matches the regex for a meet link
         rolePing = tokens[3]
         if re.search("<@&[0-9]{18}>",rolePing): #check if the role matches the regex for a role
           period = tokens[4]
