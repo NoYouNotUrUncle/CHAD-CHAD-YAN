@@ -1,5 +1,5 @@
 # ORZ CHAD CHAD YAN
-Discord bot that will check if a google meet link is open and teacher is online before pinging.
+Discord bot that will check if a google meet link is open and teacher is online before pinging. Zoom links are also supported but checks will not be performed and pings will be sent at the first opportunity (2 minutes before class by default)
 
 Currently only works in yrdsb. This may be modified by changing the *startDriver* function
 
