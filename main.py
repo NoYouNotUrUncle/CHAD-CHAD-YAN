@@ -100,7 +100,7 @@ async def dropLink(ctx, link):
   key = str(ctx.channel.id)
   link = None
   for curLink in linkQueue[key]:
-    if curLink[1] == "https://meet.google.com/lookup/" + tokens[1]:  # link matches code
+    if curLink[1] == "https://meet.google.com/lookup/" + link:  # link matches code
       link = curLink
   if link is None:
     await ctx.send("Link not found in queue.")
