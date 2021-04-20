@@ -16,10 +16,12 @@ def jsonFromFile(filePath):
     return json.loads(file.read())
 
 #top secret stuff !
-pws = jsonFromFile("pws.json")
-pw = pws["pw"]
-username = pws["username"]
-token = pws["token"]
+settings = jsonFromFile("settings.json")
+pw = settings["password"]
+username = settings["username"]
+token = settings["token"]
+#admin ids
+admins = settings["admins"]
 
 #Stuff Stack Overflow told me to put to stop crashes ¯\_(.-.)_/¯
 browser_options = Options()
@@ -27,25 +29,24 @@ browser_options.add_argument('--no-sandbox')
 browser_options.add_argument('--disable-dev-shm-usage')
 
 #headless !!!
-#browser_options.add_argument("headless")
+if "headless" in settings and settings["headless"]:
+  browser_options.add_argument("headless")
 
 #Data
-links = jsonFromFile("links.json")
+data = jsonFromFile("data.json")
+links = data["links"]
 #schedule in 24h clock
-times = jsonFromFile("times.json")
+times = data["times"]
 #channel to ping upon start
-pingChannel = jsonFromFile("channel.json")
-#admin ids  v THIS ME :) v
-admins = [414212931023011855]
-
-def cacheFile(obj,filePath):
-  with open(filePath,"w") as file:
-    file.write(json.dumps(obj))
+pingChannel = data["channel"]
 
 def cache():
-  cacheFile(links,"links.json")
-  cacheFile(times,"times.json")
-  cacheFile(pingChannel,"channel.json")
+  data_dict = {}
+  data_dict["links"] = links
+  data_dict["times"] = times
+  data_dict["channel"] = pingChannel
+  with open("data.json", "w") as file:
+    file.write(json.dumps(data_dict))
 
 client = commands.Bot(command_prefix=".", intents=discord.Intents.all()) #get discord
 slash = SlashCommand(client, sync_commands=True)
