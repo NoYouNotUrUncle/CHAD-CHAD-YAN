@@ -1,0 +1,8 @@
+{
+	"username":"YOUR_YRDSB_USERNAME_HERE",
+	"password":"YOUR_YRDSB_PASSWORD_HERE",
+	"token":"YOUR_DISCORD_BOT_TOKEN_HERE",
+    "channel": "YOUR CHANNEL_ID_HERE",
+    "admins": [123456678],
+    "headless": false
+}
