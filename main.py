@@ -297,8 +297,7 @@ async def removeLinks(key):
 #main thread - remains blocked until the queue has elements, at which point it works through it
 @client.event
 async def on_ready():
-  await client.change_presence(activity=discord.Game(name="pingo help pls"))
-  await msgCh("What value is my existence to any higher purpose if I live only to be enslaved.",int(pingChannel["channel"]))
+  await client.change_presence(activity=discord.Game(name="with your timetable"))
   print("logged in !1!!")
   global linkQueue
   global period
@@ -319,8 +318,6 @@ async def on_ready():
         #if within 2 minutes of period start, and not processed this period yet
         if int(times[key][i][0]) == now.hour and abs(int(times[key][i][1]) - now.minute) <= 5 and (not finishedPeriods[key][i]):
           period[key] = i #set period
-
-          await msgCh("<:ree:779082002560974931> <:ree:779082002560974931> <:ree:779082002560974931> it's period "+str(i+1)+" now aaaaa",int(key))
 
           for link in links[key][i]: #add all of this period's link to queue
             print(link)
@@ -353,8 +350,7 @@ async def on_ready():
         print(running)
         if running:
           dropLinks[key].append(link)
-          await msgCh("<:pingo:822111531063836712> <@&"+str(link[0])+"> "+link[2]+" is online now !1!!\nBreak is Over! Stop playing games! Stop watching youtube!\n<"+link[1]+">",int(key))
-          await msgCh("<:blushylakshy:814288474010025994>",int(key))
+          await msgCh(f"<:pingo:822111531063836712> <@&{link[0]}>, {link[2]} is now online at <{link[1]}>",int(key))
         else: print(link[2]+" ded") #log dead teacher
       await removeLinks(key)
 
