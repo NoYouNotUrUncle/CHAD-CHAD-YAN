@@ -96,6 +96,19 @@ async def startDriver(): #start a new driver and log in to gapps
 end = False
 
 #drop a link from the queue
+@slash.slash(
+  name="drop",
+  description="Drop a link",
+  options=[
+    manage_commands.create_option(
+      name="link",
+      description="The Meet code/link or Zoom link to be dropped",
+      option_type=3,
+      required=True
+    )
+  ],
+  guild_ids=[guild_id]
+)
 @client.command(name="drop", help="drop a link")
 async def dropLink(ctx, link):
   global dropLinks
@@ -112,11 +125,23 @@ async def dropLink(ctx, link):
     await ctx.send("dropping link to " + link[2] + "'s class from the queue. (Please allow some time for this to take affect.)")
 
 #get invite link
+@slash.slash(
+  name="invite",
+  description="Get the invite link",
+  options=[],
+  guild_ids=[guild_id]
+)
 @client.command(name="invite", help="get an invite link")
 async def sendInvite(ctx): # TODO: do not hardcode client id
   await ctx.send("https://discord.com/api/oauth2/authorize?client_id=815267324973023234&permissions=8&scope=bot")
 
 #restart the bot from discord (crashes but its fine kind of ???)
+@slash.slash(
+  name="restart",
+  description="Restart the bot",
+  options=[],
+  guild_ids=[guild_id]
+)
 @client.command(name="restart", help="restart bot")
 async def restart(ctx):
   global pingChannel
@@ -146,6 +171,12 @@ def linkToString(link, ctx):
   return string
 
 #view the bot's queue
+@slash.slash(
+  name="queue",
+  description="View the queue for the current period",
+  options=[],
+  guild_ids=[guild_id]
+)
 @client.command(name="queue", help="view queue")
 async def viewQueue(ctx):
   global linkQueue
@@ -159,6 +190,19 @@ async def viewQueue(ctx):
   else: await ctx.send("No queued links.")
 
 #delete a link based on the code given in view link
+@slash.slash(
+  name="delete",
+  description="Remove a link/code",
+  options=[
+    manage_commands.create_option(
+      name="code",
+      description="The Meet code/link or Zoom link to be dropped",
+      option_type=3,
+      required=True
+    )
+  ],
+  guild_ids=[guild_id]
+)
 async def deleteLink(ctx, code):
   global links
   global dropLinks
@@ -182,7 +226,13 @@ async def deleteLink(ctx, code):
         await ctx.send(f"dropping link to {link[2]}'s class from the queue. (Please allow some time for this to take affect.)")
 
 #view the current links
-@client.command(name="viewlinks", help="view all links set")
+@slash.slash(
+  name="summary",
+  description="Get the list and details of all periods and links",
+  options=[],
+  guild_ids=[guild_id]
+)
+@client.command(name="summary", help="view all links set")
 async def viewLinks(ctx):
   global times
   key = str(ctx.channel.id)
@@ -210,8 +260,40 @@ async def viewLinks(ctx):
   else: await ctx.send("No schedule set up in this channel yet.")
 
 #add link command
+@slash.slash(
+  name="add",
+  description="Add a link",
+  options=[
+    manage_commands.create_option(
+      name="link",
+      description="The Meet code/link or Zoom link to be dropped",
+      option_type=3,
+      required=True
+    ),
+    manage_commands.create_option(
+      name="role",
+      description="The role to ping on class open",
+      option_type=6,
+      required=True
+    ),
+    manage_commands.create_option(
+      name="period",
+      description="The period to assign the class to",
+      option_type=4,
+      required=True,
+      choices=[1, 2, 3, 4]
+    ),
+    manage_commands.create_option(
+      name="teacher",
+      description="The name of the teacher as an identifier",
+      option_type=3,
+      required=True
+    )
+  ],
+  guild_ids=[guild_id]
+)
 @client.command(name="add", help="add links")
-async def addLink(ctx, link, rolePing: discord.Role, period: int, *teacher): # TODO: use string for teacher later during slash command int
+async def addLink(ctx, link, rolePing: discord.Role, period: int, teacher): # TODO: use string for teacher later during slash command int
   global links
   key = str(ctx.channel.id)
   if re.search(r"^https:\/\/meet.google.com\/lookup\/[a-z0-9]{9,10}$",link): #check if the link matches the regex for a meet link
@@ -228,6 +310,41 @@ async def addLink(ctx, link, rolePing: discord.Role, period: int, *teacher): # T
     else: await ctx.send("Period not in the range 1-4. try `pingo help pls`")
 
 #rotate the periods by sorting their current times and then putting them in the desired order
+@slash.slash(
+  name="rotate",
+  description="Change the order of the periods",
+  options=[
+    manage_commands.create_option(
+      name="first",
+      description="The first period",
+      option_type=4,
+      required=True,
+      choices=[1, 2, 3, 4]
+    ),
+    manage_commands.create_option(
+      name="second",
+      description="The second period",
+      option_type=4,
+      required=True,
+      choices=[1, 2, 3, 4]
+    ),
+    manage_commands.create_option(
+      name="third",
+      description="The third period",
+      option_type=4,
+      required=True,
+      choices=[1, 2, 3, 4]
+    ),
+    manage_commands.create_option(
+      name="fourth",
+      description="The fourth period",
+      option_type=4,
+      required=True,
+      choices=[1, 2, 3, 4]
+    )
+  ],
+  guild_ids=[guild_id]
+)
 @client.command(name="rotate", help="rotate period times")
 async def rotate(ctx, first, second, third, fourth):
   global times
@@ -262,6 +379,37 @@ def parseTime(time): #parse time from string (return None if invalid)
   return parsedTime
 
 #set the periods to a given list of times
+@slash.slash(
+  name="timeset",
+  description="Change period start times",
+  options=[
+    manage_commands.create_option(
+      name="first",
+      description="The first period start time",
+      option_type=3,
+      required=True,
+    ),
+    manage_commands.create_option(
+      name="second",
+      description="The second period start time",
+      option_type=3,
+      required=True,
+    ),
+    manage_commands.create_option(
+      name="third",
+      description="The third period start time",
+      option_type=3,
+      required=True,
+    ),
+    manage_commands.create_option(
+      name="fourth",
+      description="The fourth period start time",
+      option_type=3,
+      required=True,
+    )
+  ],
+  guild_ids=[guild_id]
+)
 @client.command(name="timeset", help="Set period time with a 24h clock")
 async def timeset(ctx, time1, time2, time3, time4):
   global times
@@ -279,7 +427,7 @@ async def timeset(ctx, time1, time2, time3, time4):
     cache()
     await ctx.send(f"set the periods to the times `{' '.join([time1, time2, time3, time4])}`")
   else:
-    await ctx.send("Invalid times submitted.")
+    await ctx.send("Invalid times submitted. Please use HH:mm in 24-hour time.")
 
 async def removeLinks(key):
   global driver
