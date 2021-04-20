@@ -159,24 +159,28 @@ def linkToString(link):
       await ch.send(text)
     else: await ch.send("No queued links.")
 
-  #delete a link based on the code given in view link
-  if len(tokens) >= 2 and tokens[0] == "delete":
-    if re.search(r"^[a-z0-9]{9,10}$",tokens[1]):# check regex for the code
-      period = None
-      link = None
-      for i in range(4):
-        for curLink in links[key][i]:
-          if curLink[1] == "https://meet.google.com/lookup/"+tokens[1]: #link matches code
-            period = i
-            link = curLink
-      if period is None: await ch.send("Link not found in schedule.")
-      else:
-        links[key][period].remove(link)
-        cache()
-        await ch.send("removed period "+str(period+1)+" link to "+link[2]+"'s class")
-        if link in linkQueue[key]:
-          dropLinks[key].append(link)
-          await ch.send("dropping link to " + link[2] + "'s class from the queue. (Please allow some time for this to take affect.)")
+#delete a link based on the code given in view link
+async def deleteLink(ctx, code):
+  global links
+  global dropLinks
+  global linkQueue
+  key = str(ctx.channel.id)
+  if re.search(r"^[a-z0-9]{9,10}$",code):# check regex for the code
+    period = None
+    link = None
+    for i in range(4):
+      for curLink in links[key][i]:
+        if curLink[1] == f"https://meet.google.com/lookup/{code}": #link matches code
+          period = i
+          link = curLink
+    if period is None: await ctx.send("Link not found in schedule.")
+    else:
+      links[key][period].remove(link)
+      cache()
+      await ctx.send(f"removed period {period+1} link to {link[2]}'s class")
+      if link in linkQueue[key]:
+        dropLinks[key].append(link)
+        await ctx.send(f"dropping link to {link[2]}'s class from the queue. (Please allow some time for this to take affect.)")
 
 #view the current links
 @client.command(name="viewlinks", help="view all links set")
@@ -217,7 +221,7 @@ async def addLink(ctx, link, rolePing: discord.Role, period: int, *teacher): # T
         #trailing arguments form the teacher's name
         teacher = " ".join(teacher)
         #add the link
-        links[key][period-1].append([rolePing[3:3+18],link,teacher])
+        links[key][period-1].append([rolePing.id,link,teacher])
         cache()
         await ctx.send("Added link.")
       #errors
