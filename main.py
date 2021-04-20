@@ -19,6 +19,8 @@ username = settings["username"]
 token = settings["token"]
 #admin ids
 admins = settings["admins"]
+# server id (singular)
+guild_id = settings["guild_id"]
 
 #Stuff Stack Overflow told me to put to stop crashes ¯\_(.-.)_/¯
 browser_options = Options()
