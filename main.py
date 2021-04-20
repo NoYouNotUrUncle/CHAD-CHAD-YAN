@@ -38,12 +38,12 @@ times = data["times"]
 pingChannel = data["channel"]
 
 def cache():
-  data_dict = {}
-  data_dict["links"] = links
-  data_dict["times"] = times
-  data_dict["channel"] = pingChannel
   with open("data.json", "w") as file:
-    file.write(json.dumps(data_dict))
+    file.write(json.dumps({
+      "links": links,
+      "times": times,
+      "channel": pingChannel
+    }))
 
 client = discord.Client() #get discord
 
