@@ -239,7 +239,7 @@ async def on_message(message):
             else: await ch.send("Set up a schedule for this channel with `set times` before proceeding.")
           else: await ch.send("Period not in the range 1-4. try `pingo help pls`")
         else: await ch.send("Role to ping not found. try `pingo help pls`")
-      else: await ch.send("Not a valid google meet link. Use the link listed on classroom, not the one in your browser after you press the link. It should follow the regex `https:\/\/meet.google.com\/lookup\/[a-z0-9]{9,10}`.")
+      else: await ch.send("Not a valid google meet or zoom link. Use the link listed on classroom, not the one in your browser after you press the link. It should follow the regex `https:\/\/meet.google.com\/lookup\/[a-z0-9]{9,10}` or `https:\/\/yrdsb-ca.zoom.us\/j\/[0-9]{11}\?pwd=.*`.")
     else: await ch.send("Not enough arguments given. try `pingo help pls`")
 
   #rotate the periods by sorting their current times and then putting them in the desired order
