@@ -3,6 +3,7 @@ import os
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 import discord
+from discord.ext import commands
 import datetime
 import json
 import re
@@ -44,7 +45,7 @@ def cache():
   cacheFile(times,"times.json")
   cacheFile(pingChannel,"channel.json")
 
-client = discord.Client() #get discord
+client = commands.Bot(command_prefix=".") #get discord
 
 async def msgCh(msg, channel):# send a message to a specific channel id
   messageChannel = client.get_channel(channel)
@@ -105,23 +106,6 @@ async def on_message(message):
   ch = msg.channel
 
   tokens = msg.content.strip().split() #get args as tokens
-
-  #help page
-  if len(tokens) > 0 and "pingo" in tokens[0]:
-    if len(token) >= 3 and tokens[1:3] == ["help","pls"]:
-      embed = discord.Embed(title="HJELPP",description="<:pingo:822111531063836712>",color=0xff00ff)
-      embed.add_field(name="yes",value="This bot will ping you when the meet link is open AND the teacher is online. *It does not simply provide reminders*",inline=False)
-      embed.add_field(name="Shuffle periods",value="`rotate [first] [second] [third] [fourth]` will make the periods occur in the given order, shuffling times to achieve this. Put morning or currently not in session classes at the end. E.G. `rotate 4 2 3 1`.",inline=False)
-      embed.add_field(name="Set times",value="`set times [p1] [p2] [p3] [p4]` will set the time for each period, according to a 24h clock. Set any morning or not in session classes to `99:99`. E.G. `set times 12:45 13:35 14:25 99:99`",inline=False)
-      embed.add_field(name="Add a new link",value="`add link [link] [role mention] [period] [teacher]` will add a link tied to the current channel, set to ping at the given period. E.G. `add link https://meet.google.com/lookup/cj2ciiqgqc @role 3 ur mom lol`",inline=False)
-      embed.add_field(name="View current links",value="`view links` allows you to see the schedule and links setup for this channel.",inline=False)
-      embed.add_field(name="Delete a link",value="`delete [link]` will delete the given link from the schedule. E.G. `delete cj2ciiqgqc`",inline=False)
-      embed.add_field(name="Drop a link from the queue",value="`drop [link]` will cause the bot to stop checking if a given link is online. E.G. `drop cj2ciiqgqc`",inline=False)
-      embed.add_field(name="View the bot's link queue",value="`view queue` will show all the links in this channel that the bot is working through. ")
-      embed.add_field(name="Get bot invite link",value="`lemme innnnnnnnnn` will provide you with a link to invite the bot to your server.")
-      embed.add_field(name="Restart the bot",value="`go commit die` restarts the bot if you are an admin.")
-      await ch.send(embed=embed)
-    else: await ch.send("If you wanna learn how to get <:pingo:822111531063836712>s, use `pingo help pls`.")
 
   #drop a link from the queue
   if len(tokens) >= 2 and tokens[0] == "drop" and re.search(r"^[a-z0-9]{9,10}$",tokens[1]):
@@ -256,55 +240,59 @@ async def on_message(message):
       else: await ch.send("Not a valid google meet link. Use the link listed on classroom, not the one in your browser after you press the link. It should follow the regex `https:\/\/meet.google.com\/lookup\/[a-z0-9]{9,10}`.")
     else: await ch.send("Not enough arguments given. try `pingo help pls`")
 
-  #rotate the periods by sorting their current times and then putting them in the desired order
-  if len(tokens) > 0 and tokens[0] == "rotate":
-    if len(tokens) >= 5:
-      periods = []
-      for period in tokens[1:5]: #parse period numbers
-        if period.isnumeric(): periods.append(int(period))
-      if sorted(periods) == [1,2,3,4]: #check if permutation is valid
-        if key in links:
-          curTimeOrdered = sorted(times[key]) #sorted list of times currently in use
-          for i in range(4): #put them in order
-            times[key][periods[i]-1] = curTimeOrdered[i]
-          cache()
-          await ch.send("shuffled periods to "+str(periods))
-        else: await ch.send("Set up a schedule for this channel with `set times` before proceeding.")
-      else: await ch.send("Invalid period permutation. Try `pingo help pls`")
-    else: await ch.send("Not enough arguments. Try `pingo help pls`")
-
-  def parseTime(time): #parse time from string (return None if invalid)
-    parsedTime = None
-    if ":" not in time: return None
-    if not time[:time.index(":")].isnumeric(): return None
+#rotate the periods by sorting their current times and then putting them in the desired order
+@client.command(name="rotate", help="rotate period times")
+async def rotate(ctx, first, second, third, fourth):
+  global times
+  key = str(ctx.channel.id)
+  periods = []
+  for period in [first, second, third, fourth]: #parse period numbers
+    if period.isnumeric(): periods.append(int(period))
+  if sorted(periods) == [1,2,3,4]: #check if permutation is valid
+    if key in links:
+      curTimeOrdered = sorted(times[key]) #sorted list of times currently in use
+      for i in range(4): #put them in order
+        times[key][periods[i]-1] = curTimeOrdered[i]
+      cache()
+      await ctx.send("shuffled periods to "+str(periods))
     else:
-      hour = int(time[:time.index(":")])
-      if not((1 <= hour <= 24) or hour == 99): return None
-      parsedTime = hour
-    if time.index(":") == len(time)-1: return None
-    if not time[time.index(":")+1:].isnumeric(): return None
-    else:
-      minute = int(time[time.index(":")+1:])
-      if not((0 <= minute <= 59) or minute == 99): return None
-      parsedTime = [parsedTime,minute]
-    return parsedTime
+      await ctx.send("Set up a schedule for this channel with `set times` before proceeding.")
 
-  #set the periods to a given list of times
-  if len(tokens) >= 2 and tokens[:2] == ["set","times"]:
-    if len(tokens) >= 6:
-      newTimes = []
-      for time in tokens[2:6]: #parse times
-        if parseTime(time) is not None: newTimes.append(parseTime(time))
-      if len(newTimes) == 4: #all parses succeeded
-        if key not in links: #set up new schedule
-          times[key] = [[] for i in range(4)]
-          links[key] = [[] for i in range(4)]
-        #overwrite schedule
-        for i in range(4): times[key][i] = newTimes[i]
-        cache()
-        await ch.send("set the periods to the times `"+(" ".join(tokens[2:6]))+"`")
-      else: await ch.send("try `pingo help pls`")
-    else: await ch.send("try `pingo help pls`")
+def parseTime(time): #parse time from string (return None if invalid)
+  parsedTime = None
+  if ":" not in time: return None
+  if not time[:time.index(":")].isnumeric(): return None
+  else:
+    hour = int(time[:time.index(":")])
+    if not((1 <= hour <= 24) or hour == 99): return None
+    parsedTime = hour
+  if time.index(":") == len(time)-1: return None
+  if not time[time.index(":")+1:].isnumeric(): return None
+  else:
+    minute = int(time[time.index(":")+1:])
+    if not((0 <= minute <= 59) or minute == 99): return None
+    parsedTime = [parsedTime,minute]
+  return parsedTime
+
+#set the periods to a given list of times
+@client.command(name="timeset", help="Set period time with a 24h clock")
+async def timeset(ctx, time1, time2, time3, time4):
+  global times
+  global links
+  newTimes = []
+  for time in [time1, time2, time3, time4]: #parse times
+    if parseTime(time) is not None: newTimes.append(parseTime(time))
+  if len(newTimes) == 4: #all parses succeeded
+    key = str(ctx.channel.id)
+    if key not in links: #set up new schedule
+      times[key] = [[] for i in range(4)]
+      links[key] = [[] for i in range(4)]
+    #overwrite schedule
+    for i in range(4): times[key][i] = newTimes[i]
+    cache()
+    await ctx.send(f"set the periods to the times `{' '.join([time1, time2, time3, time4])}`")
+  else:
+    await ctx.send("Invalid times submitted.")
 
 async def removeLinks(key):
   global driver
