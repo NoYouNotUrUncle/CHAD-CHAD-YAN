@@ -4,6 +4,8 @@ from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 import discord
 from discord.ext import commands
+from discord_slash import SlashCommand
+from discord_slash.utils import manage_commands
 import datetime
 import json
 import re
@@ -45,7 +47,8 @@ def cache():
   cacheFile(times,"times.json")
   cacheFile(pingChannel,"channel.json")
 
-client = commands.Bot(command_prefix=".") #get discord
+client = commands.Bot(command_prefix=".", intents=discord.Intents.all()) #get discord
+slash = SlashCommand(client, sync_commands=True)
 
 async def msgCh(msg, channel):# send a message to a specific channel id
   messageChannel = client.get_channel(channel)
