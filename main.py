@@ -92,54 +92,47 @@ async def startDriver(): #start a new driver and log in to gapps
 #to tell blocked thread to stop monkeying
 end = False
 
-@client.event
-async def on_message(message):
+#drop a link from the queue
+@client.command(name="drop", help="drop a link")
+async def dropLink(ctx, link):
+  global dropLinks
+  global linkQueue
+  key = str(ctx.channel.id)
+  link = None
+  for curLink in linkQueue[key]:
+    if curLink[1] == "https://meet.google.com/lookup/" + tokens[1]:  # link matches code
+      link = curLink
+  if link is None:
+    await ctx.send("Link not found in queue.")
+  else:
+    dropLinks[key].append(link)
+    await ctx.send("dropping link to " + link[2] + "'s class from the queue. (Please allow some time for this to take affect.)")
+
+#get invite link
+@client.command(name="invite", help="get an invite link")
+async def sendInvite(ctx): # TODO: do not hardcode client id
+  await ctx.send("https://discord.com/api/oauth2/authorize?client_id=815267324973023234&permissions=8&scope=bot")
+
+#restart the bot from discord (crashes but its fine kind of ???)
+@client.command(name="restart", help="restart bot")
+async def restart(ctx):
+  global pingChannel
+  global admins
   global end
-  global openClasses
-  global driver
+  if ctx.author.id not in admins: #lol
+    await ctx.send("Permission denied.")
+  else: #restart
+    pingChannel["channel"] = str(ctx.channel.id)
+    cache()
+    await ctx.send("Restarting.")
+    os.startfile(__file__)
+    end = True
+    quit()
 
-  if message.author.bot: return #don't reply to bots (including self)
-
-  #short forms
-  msg = message
-  key = str(msg.channel.id)
-  ch = msg.channel
-
-  tokens = msg.content.strip().split() #get args as tokens
-
-  #drop a link from the queue
-  if len(tokens) >= 2 and tokens[0] == "drop" and re.search(r"^[a-z0-9]{9,10}$",tokens[1]):
-    link = None
-    for curLink in linkQueue[key]:
-      if curLink[1] == "https://meet.google.com/lookup/" + tokens[1]:  # link matches code
-        link = curLink
-    if link is None:
-      await ch.send("Link not found in queue.")
-    else:
-      dropLinks[key].append(link)
-      await ch.send("dropping link to " + link[2] + "'s class from the queue. (Please allow some time for this to take affect.)")
-
-  #invite upon "lemme in" or weird variations like "leeeeeeeeeemmmmmmmeeeeeeeee innnnnn plssss"
-  if len(tokens) >= 2 and "le" in tokens[0] and "me" in tokens[0] and "in" in tokens[1]:
-    await ch.send("rrreeeeeeeeeeeeeeeeeeeeeeeeeeeee fiiiiiiiinnnnnnnneeeeeeeeee")
-    await ch.send("https://discord.com/api/oauth2/authorize?client_id=815267324973023234&permissions=8&scope=bot")
-
-  #restart the bot from discord (crashes but its fine kind of ???)
-  if len(tokens) >= 3 and tokens[:3] == ["go","commit","die"]:
-    if msg.author.id not in admins: #lol
-      await ch.send("ur mom lol")
-    else: #restart
-      pingChannel["channel"] = key
-      cache()
-      await msgCh("<:eyy:780873307913191447> EASIEST WAY TO GET OUT OF A PHYSICS IA",int(key))
-      os.startfile(__file__)
-      end = True
-      quit()
-
-def linkToString(link):
+def linkToString(link, ctx):
   string = ""
   pingRole = "(role not found)"
-  for role in msg.guild.roles:
+  for role in ctx.guild.roles:
     if str(role.id) == str(link[0]): pingRole = role.name
   string += "@"
   string += pingRole+" "
@@ -149,15 +142,18 @@ def linkToString(link):
   string += code+"\n"
   return string
 
-  #view the bot's queue
-  if len(tokens) >= 2 and tokens[:2] == ["view","queue"]:
-    if key in linkQueue and len(linkQueue[key]) > 0:
-      text = "```"
-      for link in linkQueue[key]: #add all the links
-        text += linkToString(link)
-      text += "```"
-      await ch.send(text)
-    else: await ch.send("No queued links.")
+#view the bot's queue
+@client.command(name="queue", help="view queue")
+async def viewQueue(ctx):
+  global linkQueue
+  key = str(ctx.channel.id)
+  if key in linkQueue and len(linkQueue[key]) > 0:
+    text = "```"
+    for link in linkQueue[key]: #add all the links
+      text += linkToString(link, ctx)
+    text += "```"
+    await ctx.send(text)
+  else: await ctx.send("No queued links.")
 
 #delete a link based on the code given in view link
 async def deleteLink(ctx, code):
@@ -204,7 +200,7 @@ async def viewLinks(ctx):
       text += "\n"
 
       for link in links[key][i]:
-        text += f"    {linkToString(link)}"
+        text += f"    {linkToString(link, ctx)}"
 
     text += "```"
     await ctx.send(text)
@@ -221,7 +217,7 @@ async def addLink(ctx, link, rolePing: discord.Role, period: int, *teacher): # T
         #trailing arguments form the teacher's name
         teacher = " ".join(teacher)
         #add the link
-        links[key][period-1].append([rolePing.id,link,teacher])
+        links[key][period-1].append([str(rolePing.id),link,teacher])
         cache()
         await ctx.send("Added link.")
       #errors
