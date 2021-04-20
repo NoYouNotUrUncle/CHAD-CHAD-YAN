@@ -142,18 +142,18 @@ async def on_message(message):
       end = True
       quit()
 
-  def linkToString(link):
-    string = ""
-    pingRole = "(role not found)"
-    for role in msg.guild.roles:
-      if str(role.id) == str(link[0]): pingRole = role.name
-    string += "@"
-    string += pingRole+" "
-    string += link[2]+" " #teacher
-    code = link[1][len(link[1])-10:]
-    if code[0] == "/": code = code[1:] #meet code may be only 9 chars long apparently ?
-    string += code+"\n"
-    return string
+def linkToString(link):
+  string = ""
+  pingRole = "(role not found)"
+  for role in msg.guild.roles:
+    if str(role.id) == str(link[0]): pingRole = role.name
+  string += "@"
+  string += pingRole+" "
+  string += link[2]+" " #teacher
+  code = link[1][len(link[1])-10:]
+  if code[0] == "/": code = code[1:] #meet code may be only 9 chars long apparently ?
+  string += code+"\n"
+  return string
 
   #view the bot's queue
   if len(tokens) >= 2 and tokens[:2] == ["view","queue"]:
@@ -189,56 +189,51 @@ async def on_message(message):
           dropLinks[key].append(link)
           await ch.send("dropping link to " + link[2] + "'s class from the queue. (Please allow some time for this to take affect.)")
 
-  #view the current links
-  if len(tokens) >= 2 and tokens[:2] == ["view","links"]:
-    if key in links:
-      await ch.send("<:pingo:822111531063836712>")
-      text = "```"
-      for i in range(4):
+#view the current links
+@client.command(name="viewlinks", help="view all links set")
+async def viewLinks(ctx):
+  global times
+  key = str(ctx.channel.id)
+  if key in links:
+    text = "```"
+    for i in range(4):
+      #get time in H:MM AM/PM format :lul:
+      text += f"Period {i+1} - "
+      am = times[key][i][0] <= 12
+      if times[key][i][0] == 99: am = None
+      if am is None or am: text += str(times[key][i][0])
+      else: text += str(times[key][i][0]-12)
+      text += ":"
+      if len(str(times[key][i][1])) == 1: text += "0"
+      text += f"{times[key][i][1]} "
+      if am: text += "AM"
+      elif am is not None: text += "PM"
+      text += "\n"
 
-        #get time in H:MM AM/PM format :lul:
-        text += "Period "+str(i+1)+" - "
-        am = times[key][i][0] <= 12
-        if times[key][i][0] == 99: am = None
-        if am is None or am: text += str(times[key][i][0])
-        else: text += str(times[key][i][0]-12)
-        text += ":"
-        if len(str(times[key][i][1])) == 1: text += "0"
-        text += str(times[key][i][1])
-        text += " "
-        if am: text += "AM"
-        elif am is not None: text += "PM"
-        text += "\n"
+      for link in links[key][i]:
+        text += f"    {linkToString(link)}"
 
-        for link in links[key][i]:
-          text += "    "+linkToString(link)
+    text += "```"
+    await ctx.send(text)
+  else: await ctx.send("No schedule set up in this channel yet.")
 
-      text += "```"
-      await ch.send(text)
-    else: await ch.send("No schedule set up in this channel yet.")
-
-  #add link command
-  if len(tokens) >= 2 and tokens[:2] == ["add","link"]:
-    if len(tokens) >= 6:
-      link = tokens[2]
-      if re.search(r"^https:\/\/meet.google.com\/lookup\/[a-z0-9]{9,10}$",link): #check if the link matches the regex for a meet link
-        rolePing = tokens[3]
-        if re.search("<@&[0-9]{18}>",rolePing): #check if the role matches the regex for a role
-          period = tokens[4]
-          if int(period) in [1,2,3,4]:
-            if key in links:
-              #trailing arguments form the teacher's name
-              teacher = " ".join(tokens[5:])
-              #add the link
-              links[key][int(period)-1].append([rolePing[3:3+18],link,teacher])
-              await ch.send("<@&"+rolePing[3:3+18]+"> every time "+teacher+"'s class opens, you will be pinged. To opt out of this, remove the role from yourself.")
-              cache()
-            #errors
-            else: await ch.send("Set up a schedule for this channel with `set times` before proceeding.")
-          else: await ch.send("Period not in the range 1-4. try `pingo help pls`")
-        else: await ch.send("Role to ping not found. try `pingo help pls`")
-      else: await ch.send("Not a valid google meet link. Use the link listed on classroom, not the one in your browser after you press the link. It should follow the regex `https:\/\/meet.google.com\/lookup\/[a-z0-9]{9,10}`.")
-    else: await ch.send("Not enough arguments given. try `pingo help pls`")
+#add link command
+@client.command(name="add", help="add links")
+async def addLink(ctx, link, rolePing: discord.Role, period: int, *teacher): # TODO: use string for teacher later during slash command int
+  global links
+  key = str(ctx.channel.id)
+  if re.search(r"^https:\/\/meet.google.com\/lookup\/[a-z0-9]{9,10}$",link): #check if the link matches the regex for a meet link
+    if period in range(1, 4+1):
+      if key in links:
+        #trailing arguments form the teacher's name
+        teacher = " ".join(teacher)
+        #add the link
+        links[key][period-1].append([rolePing[3:3+18],link,teacher])
+        cache()
+        await ctx.send("Added link.")
+      #errors
+      else: await ctx.send("Set up a schedule for this channel with `set times` before proceeding.")
+    else: await ctx.send("Period not in the range 1-4. try `pingo help pls`")
 
 #rotate the periods by sorting their current times and then putting them in the desired order
 @client.command(name="rotate", help="rotate period times")
