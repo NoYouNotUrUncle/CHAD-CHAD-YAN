@@ -165,7 +165,7 @@ async def restart(ctx):
 def linkToString(link, ctx):
   pingRole = "(role not found)"
   for role in ctx.guild.roles:
-    if str(role.id) == str(link[0]): pingRole = f"<@{role.id}>"
+    if str(role.id) == str(link[0]): pingRole = f"<@&{role.id}>"
   code = link
   if not "zoom.us" in link:
     code = link[1][len(link[1])-10:]
