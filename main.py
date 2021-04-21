@@ -9,7 +9,7 @@ import re
 import html2text
 
 def jsonFromFile(filePath):
-  with open(filePath,"r") as file:
+  with open(filePath,"r",encoding="utf8") as file:
     return json.loads(file.read())
 
 #top secret stuff !
@@ -125,15 +125,21 @@ async def on_message(message):
 
   #drop a link from the queue
   if len(tokens) >= 2 and tokens[0] == "drop" and re.search(r"^[a-z0-9]{9,10}$",tokens[1]):
-    link = None
-    for curLink in linkQueue[key]:
-      if curLink[1] == "https://meet.google.com/lookup/" + tokens[1]:  # link matches code
-        link = curLink
-    if link is None:
-      await ch.send("Link not found in queue.")
+    if len(tokens) >= 3 and tokens[2] in ["--global", "-g"]:
+      availableKeys = [key for key in links]
     else:
-      dropLinks[key].append(link)
-      await ch.send("dropping link to " + link[2] + "'s class from the queue. (Please allow some time for this to take affect.)")
+      availableKeys = [key]
+    i = 0
+    while i < len(availableKeys):
+      for link in linkQueue[availableKeys[i]]:
+        if link == "https://meet.google.com/lookup/" + tokens[1]:
+          dropLinks[key].append(link)
+          await ch.send("dropping link to " + link[2] + "'s class from the queue. (Please allow some time for this to take affect.)")
+          i = len(availableKeys) #break outer when it comes
+          break
+      i += 1
+    if i == len(availableKeys): #never broke the loop
+      await ch.send("Link not found in queue.")
 
   #invite upon "lemme in" or weird variations like "leeeeeeeeeemmmmmmmeeeeeeeee innnnnn plssss"
   if len(tokens) >= 2 and "le" in tokens[0] and "me" in tokens[0] and "in" in tokens[1]:
@@ -167,13 +173,18 @@ async def on_message(message):
 
   #view the bot's queue
   if len(tokens) >= 2 and tokens[:2] == ["view","queue"]:
-    if key in linkQueue and len(linkQueue[key]) > 0:
-      text = "```"
-      for link in linkQueue[key]: #add all the links
+    if len(tokens) >= 3 and tokens[2] in ["--global", "-g"]:
+      visibleKeys = [key for key in links]
+    else:
+      visibleKeys = [key]
+    text = "```"
+    for key in visibleKeys:
+      for link in linkQueue[key]:
         text += linkToString(link)
-      text += "```"
-      await ch.send(text)
-    else: await ch.send("No queued links.")
+    text += "```"
+    if text == "``````":
+      text = "No queued links."
+    await ch.send(text)
 
   #delete a link based on the code given in view link
   if len(tokens) >= 2 and tokens[0] == "delete":
