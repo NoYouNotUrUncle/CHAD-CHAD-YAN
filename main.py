@@ -317,8 +317,6 @@ async def addLink(ctx, link, rolePing: discord.Role, period: int, teacher): # TO
   if re.search(r"^https:\/\/meet.google.com\/lookup\/[a-z0-9]{9,10}$",link) or "zoom.us" in link: #check if the link matches the regex for a meet link
     if period in range(1, 4+1):
       if key in links:
-        #trailing arguments form the teacher's name
-        teacher = " ".join(teacher)
         #add the link
         links[key][period-1].append([str(rolePing.id),link,teacher])
         cache()
