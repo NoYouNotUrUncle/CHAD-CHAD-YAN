@@ -49,7 +49,7 @@ def cache():
       "links": links,
       "times": times,
       "channel": pingChannel
-    }))
+    }, indent=4))
 
 client = commands.Bot(command_prefix=".", intents=discord.Intents.all()) #get discord
 slash = SlashCommand(client, sync_commands=True)
