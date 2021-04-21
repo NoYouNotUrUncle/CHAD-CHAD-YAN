@@ -269,7 +269,7 @@ async def viewLinks(ctx):
     manage_commands.create_option(
       name="role",
       description="The role to ping on class open",
-      option_type=6,
+      option_type=8,
       required=True
     ),
     manage_commands.create_option(
