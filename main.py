@@ -271,6 +271,8 @@ async def viewLinks(ctx):
       if am: title += "AM"
       elif am is not None: title += "PM"
       text = "\n".join([linkToString(link, ctx) for link in links[key][i]])
+      if text == "" or text is None:
+        text = "No classes for this period."
       embed.add_field(name=title, value=text, inline=False)
     await ctx.send(embed=embed)
   else: await ctx.send("No schedule set up in this channel yet.")
