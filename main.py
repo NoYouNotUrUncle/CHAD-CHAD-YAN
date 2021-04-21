@@ -325,6 +325,8 @@ async def addLink(ctx, link, rolePing: discord.Role, period: int, teacher): # TO
       #errors
       else: await ctx.send("Set up a schedule for this channel with `set times` before proceeding.")
     else: await ctx.send("Period not in the range 1-4")
+  else:
+    await ctx.send("Invalid link")
 
 #rotate the periods by sorting their current times and then putting them in the desired order
 @slash.slash(
