@@ -16,10 +16,14 @@ def jsonFromFile(filePath):
     return json.loads(file.read())
 
 #top secret stuff !
-pws = jsonFromFile("pws.json")
-pw = pws["pw"]
-username = pws["username"]
-token = pws["token"]
+settings = jsonFromFile("settings.json")
+pw = settings["password"]
+username = settings["username"]
+token = settings["token"]
+#admin ids
+admins = settings["admins"]
+# server id (singular)
+guild_id = settings["guild_id"]
 
 #Stuff Stack Overflow told me to put to stop crashes ¯\_(.-.)_/¯
 browser_options = Options()
@@ -27,25 +31,24 @@ browser_options.add_argument('--no-sandbox')
 browser_options.add_argument('--disable-dev-shm-usage')
 
 #headless !!!
-#browser_options.add_argument("headless")
+if "headless" in settings and settings["headless"]:
+  browser_options.add_argument("headless")
 
 #Data
-links = jsonFromFile("links.json")
+data = jsonFromFile("data.json")
+links = data["links"]
 #schedule in 24h clock
-times = jsonFromFile("times.json")
+times = data["times"]
 #channel to ping upon start
-pingChannel = jsonFromFile("channel.json")
-#admin ids  v THIS ME :) v
-admins = [414212931023011855]
-
-def cacheFile(obj,filePath):
-  with open(filePath,"w") as file:
-    file.write(json.dumps(obj))
+pingChannel = data["channel"]
 
 def cache():
-  cacheFile(links,"links.json")
-  cacheFile(times,"times.json")
-  cacheFile(pingChannel,"channel.json")
+  with open("data.json", "w") as file:
+    file.write(json.dumps({
+      "links": links,
+      "times": times,
+      "channel": pingChannel
+    }))
 
 client = commands.Bot(command_prefix=".", intents=discord.Intents.all()) #get discord
 slash = SlashCommand(client, sync_commands=True)
@@ -78,7 +81,7 @@ async def startDriver(): #start a new driver and log in to gapps
   driver = webdriver.Chrome(options=browser_options)
   driver.set_page_load_timeout(10) #restart driver after 5s of monkeying (cus google block prolly!)
   #go to google.yrdsb.ca and log in
-  driver.get("https://google.yrdsb.ca/EasyConnect/SSO/Redirect.aspx?SAMLRequest=fVLLTuswEN0j8Q%2BR93myqawmqBeEbiUeEQ0s7s51pqlvbE%2FwOC38PW5KBSxge3zmPMYzv3w1OtqBI4W2ZHmSsQisxFbZrmRPzU08Y5fV%2BdmchNEDX4x%2Bax%2FhZQTyUZi0xKeHko3OchSkiFthgLiXfLW4u%2BVFkvHBoUeJmkXL65Jtdata0KIfuu1GGAM9ygGtlbJfYw92bdD0%2F9vAfj7FKg6xlkQjLC15YX2AsiKPs4s4nzVZxosLXsz%2Bsaj%2BcPqj7LHBb7HWRxLxv01Tx%2FXDqpkEdiGduw%2FsknWInYZEojnY14JI7QK8EZqARQsicD4EvEJLowG3ArdTEp4eb0NL7wfiabrf75NPmVSknRgGSt5cS%2BtEilRIYtW0XT4VdF%2FW%2Bnt8cbJn1afBPP0iVX382qHM8rpGreRbtNAa91cOhA9NvBtDkRt0Rvif3fIknxDVxpuJykdLA0i1UdCyKK2Ort%2FPIxzNOw%3D%3D&RelayState=https%3A%2F%2Fwww.google.com%2Fa%2Fgapps.yrdsb.ca%2FServiceLogin%3Fservice%3Dwise%26passive%3Dtrue%26continue%3Dhttps%253A%252F%252Fdrive.google.com%252Fa%252Fgapps.yrdsb.ca%252F%26followup%3Dhttps%253A%252F%252Fdrive.google.com%252Fa%252Fgapps.yrdsb.ca%252F%26faa%3D1")
+  driver.get("https://google.yrdsb.ca/LoginFormIdentityProvider/Login.aspx?ReturnUrl=%2fLoginFormIdentityProvider%2fDefault.aspx")
   print("at login page")
   await asyncio.sleep(2)
   driver.find_element_by_xpath("//*[@id=\"UserName\"]").send_keys(username)
