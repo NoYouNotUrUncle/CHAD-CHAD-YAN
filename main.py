@@ -239,16 +239,16 @@ async def viewLinks(ctx):
     embed = discord.Embed(title="Links")
     for i in range(4):
       #get time in H:MM AM/PM format :lul:
-      title = f"Period {i+1}"
+      title = f"Period {i+1} — "
       am = times[key][i][0] <= 12
       if times[key][i][0] == 99: am = None
-      if am is None or am: text += str(times[key][i][0])
-      else: text += str(times[key][i][0]-12)
-      text += ":"
-      if len(str(times[key][i][1])) == 1: text += "0"
-      text += f"{times[key][i][1]} "
-      if am: text += "AM"
-      elif am is not None: text += "PM"
+      if am is None or am: title += str(times[key][i][0])
+      else: title += str(times[key][i][0]-12)
+      title += ":"
+      if len(str(times[key][i][1])) == 1: title += "0"
+      title += f"{times[key][i][1]} "
+      if am: title += "AM"
+      elif am is not None: title += "PM"
       text = "\n".join([linkToString(link, ctx) for link in links[key][i]])
       embed.add_field(name=title, value=text, inline=False)
     await ctx.send(embed=embed)
