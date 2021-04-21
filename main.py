@@ -10,6 +10,7 @@ import datetime
 import json
 import re
 import html2text
+import sys
 
 def jsonFromFile(filePath):
   with open(filePath,"r",encoding="utf8") as file:
@@ -156,9 +157,10 @@ async def restart(ctx):
     pingChannel["channel"] = str(ctx.channel.id)
     cache()
     await ctx.send("Restarting.")
-    os.startfile(__file__)
+    #os.startfile(__file__)
     end = True
     quit()
+    sys.exit(1)
 
 def linkToString(link, ctx):
   pingRole = "(role not found)"
