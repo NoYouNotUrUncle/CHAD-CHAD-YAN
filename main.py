@@ -158,17 +158,12 @@ async def restart(ctx):
     quit()
 
 def linkToString(link, ctx):
-  string = ""
   pingRole = "(role not found)"
   for role in ctx.guild.roles:
-    if str(role.id) == str(link[0]): pingRole = role.name
-  string += "@"
-  string += pingRole+" "
-  string += link[2]+" " #teacher
+    if str(role.id) == str(link[0]): pingRole = f"<@{role.id}>"
   code = link[1][len(link[1])-10:]
   if code[0] == "/": code = code[1:] #meet code may be only 9 chars long apparently ?
-  string += code+"\n"
-  return string
+  return f"{pingRole} — {link[2]} — {code}"
 
 #view the bot's queue
 @slash.slash(
@@ -182,11 +177,10 @@ async def viewQueue(ctx):
   global linkQueue
   key = str(ctx.channel.id)
   if key in linkQueue and len(linkQueue[key]) > 0:
-    text = "```"
+    embed = discord.Embed(title="Current queue")
     for link in linkQueue[key]: #add all the links
-      text += linkToString(link, ctx)
-    text += "```"
-    await ctx.send(text)
+      embed.description += linkToString(link, ctx) + "\n"
+    await ctx.send(embed=embed)
   else: await ctx.send("No queued links.")
 
 #delete a link based on the code given in view link
@@ -237,10 +231,10 @@ async def viewLinks(ctx):
   global times
   key = str(ctx.channel.id)
   if key in links:
-    text = "```"
+    embed = discord.Embed(title="Links")
     for i in range(4):
       #get time in H:MM AM/PM format :lul:
-      text += f"Period {i+1} - "
+      title = f"Period {i+1}"
       am = times[key][i][0] <= 12
       if times[key][i][0] == 99: am = None
       if am is None or am: text += str(times[key][i][0])
@@ -250,13 +244,9 @@ async def viewLinks(ctx):
       text += f"{times[key][i][1]} "
       if am: text += "AM"
       elif am is not None: text += "PM"
-      text += "\n"
-
-      for link in links[key][i]:
-        text += f"    {linkToString(link, ctx)}"
-
-    text += "```"
-    await ctx.send(text)
+      text = "\n".join([linkToString(link, ctx) for link in links[key][i]])
+      embed.add_field(name=title, value=text, inline=False)
+    await ctx.send(embed=embed)
   else: await ctx.send("No schedule set up in this channel yet.")
 
 #add link command
