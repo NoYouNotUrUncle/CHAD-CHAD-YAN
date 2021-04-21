@@ -180,9 +180,8 @@ def linkToString(link, ctx):
   guild_ids=[guild_id]
 )
 @client.command(name="queue", help="view queue")
-async def viewQueue(ctx, isglobal: bool):
+async def viewQueue(ctx):
   global linkQueue
-  global links
   key = str(ctx.channel.id)
   if key in linkQueue and len(linkQueue[key]) > 0:
     embed = discord.Embed(title="Current queue")
