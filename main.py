@@ -204,6 +204,8 @@ async def viewQueue(ctx):
   ],
   guild_ids=[guild_id]
 )
+
+@client.command(name="delete", help="Remove a link/code")
 async def deleteLink(ctx, code):
   global links
   global dropLinks
@@ -224,6 +226,24 @@ async def deleteLink(ctx, code):
     if link in linkQueue[key]:
       dropLinks[key].append(link)
       await ctx.send(f"dropping link to {link[2]}'s class from the queue. (Please allow some time for this to take effect.)")
+  
+@slash.slash(
+  name="setchannel",
+  description="Change the general ping channel",
+  options=[
+    manage_commands.create_option(
+      name="channel",
+      description="the channel to ping",
+      option_type=7,
+      required=True
+    )
+  ]
+)
+@client.command(name="setchannel", help="Change the general ping channel")
+async def changeChannel(ctx, channel: discord.TextChannel):
+  global pingChannel
+  pingChannel = int(channel)
+  await ctx.send(f"Changed channel to {str(channel)}")
 
 #view the current links
 @slash.slash(
