@@ -224,7 +224,7 @@ async def deleteLink(ctx, code):
     await ctx.send(f"removed period {period+1} link to {link[2]}'s class")
     if link in linkQueue[key]:
       dropLinks[key].append(link)
-      await ctx.send(f"dropping link to {link[2]}'s class from the queue. (Please allow some time for this to take affect.)")
+      await ctx.send(f"dropping link to {link[2]}'s class from the queue. (Please allow some time for this to take effect.)")
 
 #view the current links
 @slash.slash(
