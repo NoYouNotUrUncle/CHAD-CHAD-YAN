@@ -125,9 +125,8 @@ async def on_message(message):
 
   #drop a link from the queue
   if len(tokens) >= 2 and tokens[0] == "drop":
-    for curLink in linkQueue[key]:
-      if curLink[1] == "https://meet.google.com/lookup/" + tokens[1] or curLink[1] == tokens[1]:  # link matches code
-        link = curLink
+    for link in linkQueue[key]:
+      if link[1] == "https://meet.google.com/lookup/" + tokens[1] or link[1] == tokens[1]:  # link matches code
         dropLinks[key].append(link)
         await ch.send("dropping link to " + link[2] + "'s class from the queue. (Please allow some time for this to take effect.)")
         break
