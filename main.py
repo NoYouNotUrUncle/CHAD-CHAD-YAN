@@ -166,8 +166,10 @@ def linkToString(link, ctx):
   pingRole = "(role not found)"
   for role in ctx.guild.roles:
     if str(role.id) == str(link[0]): pingRole = f"<@{role.id}>"
-  code = link[1][len(link[1])-10:]
-  if code[0] == "/": code = code[1:] #meet code may be only 9 chars long apparently ?
+  code = link
+  if not "zoom.us" in link:
+    code = link[1][len(link[1])-10:]
+    if code[0] == "/": code = code[1:] #meet code may be only 9 chars long apparently ?
   return f"{pingRole} — {link[2]} — {code}"
 
 #view the bot's queue
@@ -207,22 +209,21 @@ async def deleteLink(ctx, code):
   global dropLinks
   global linkQueue
   key = str(ctx.channel.id)
-  if re.search(r"^[a-z0-9]{9,10}$",code):# check regex for the code
-    period = None
-    link = None
-    for i in range(4):
-      for curLink in links[key][i]:
-        if curLink[1] == f"https://meet.google.com/lookup/{code}": #link matches code
-          period = i
-          link = curLink
-    if period is None: await ctx.send("Link not found in schedule.")
-    else:
-      links[key][period].remove(link)
-      cache()
-      await ctx.send(f"removed period {period+1} link to {link[2]}'s class")
-      if link in linkQueue[key]:
-        dropLinks[key].append(link)
-        await ctx.send(f"dropping link to {link[2]}'s class from the queue. (Please allow some time for this to take affect.)")
+  period = None
+  link = None
+  for i in range(4):
+    for curLink in links[key][i]:
+      if curLink[1] == f"https://meet.google.com/lookup/{code}" or curLink[1] == code: #link matches code
+        period = i
+        link = curLink
+  if period is None: await ctx.send("Link not found in schedule.")
+  else:
+    links[key][period].remove(link)
+    cache()
+    await ctx.send(f"removed period {period+1} link to {link[2]}'s class")
+    if link in linkQueue[key]:
+      dropLinks[key].append(link)
+      await ctx.send(f"dropping link to {link[2]}'s class from the queue. (Please allow some time for this to take affect.)")
 
 #view the current links
 @slash.slash(
@@ -291,7 +292,7 @@ async def viewLinks(ctx):
 async def addLink(ctx, link, rolePing: discord.Role, period: int, teacher): # TODO: use string for teacher later during slash command int
   global links
   key = str(ctx.channel.id)
-  if re.search(r"^https:\/\/meet.google.com\/lookup\/[a-z0-9]{9,10}$",link): #check if the link matches the regex for a meet link
+  if re.search(r"^https:\/\/meet.google.com\/lookup\/[a-z0-9]{9,10}$",link) or "zoom.us" in link: #check if the link matches the regex for a meet link
     if period in range(1, 4+1):
       if key in links:
         #trailing arguments form the teacher's name
@@ -302,7 +303,7 @@ async def addLink(ctx, link, rolePing: discord.Role, period: int, teacher): # TO
         await ctx.send("Added link.")
       #errors
       else: await ctx.send("Set up a schedule for this channel with `set times` before proceeding.")
-    else: await ctx.send("Period not in the range 1-4. try `pingo help pls`")
+    else: await ctx.send("Period not in the range 1-4")
 
 #rotate the periods by sorting their current times and then putting them in the desired order
 @slash.slash(
@@ -481,17 +482,20 @@ async def on_ready():
     for key in linkQueue: #for every channel
       for link in linkQueue[key]: #for every link in the queue
         running = False #default to not open
-        try:
-          driver.get(link[1]) #go to link
-          print("loading "+link[1])
-          await asyncio.sleep(1)
-          #it's open if the link went through
-          running = ("Join" in html2text.HTML2Text().handle(driver.page_source)) and ("meet" in driver.current_url)
-        except: #if timeout, due to bot detection
-          running = False #default to not open
-          driver.close() #restart driver
-          await startDriver()
-          print("ohhh nooo")
+        if "meet.google.com" in link[1]:
+          try:
+            driver.get(link[1]) #go to link
+            print("loading "+link[1])
+            await asyncio.sleep(1)
+            #it's open if the link went through
+            running = ("Join" in html2text.HTML2Text().handle(driver.page_source)) and ("meet" in driver.current_url)
+          except: #if timeout, due to bot detection
+            running = False #default to not open
+            driver.close() #restart driver
+            await startDriver()
+            print("ohhh nooo")
+        else:
+          running = True
         print(running)
         if running:
           dropLinks[key].append(link)
