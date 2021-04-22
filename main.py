@@ -114,7 +114,7 @@ end = False
   ],
   guild_ids=[guild_id]
 )
-@client.command(name="drop", help="drop a link")
+@client.command(name="drop", help="Drop a link from the queue")
 async def dropLink(ctx, link):
   global dropLinks
   global linkQueue
