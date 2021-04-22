@@ -110,7 +110,13 @@ end = False
       description="The Meet code/link or Zoom link to be dropped",
       option_type=3,
       required=True
-    )
+    ),
+    manage_commands.create_option(
+      name="global",
+      description="View the global queue as opposed to just this channel",
+      option_type=5,
+      required=False
+    ),
   ],
   guild_ids=[guild_id]
 )
