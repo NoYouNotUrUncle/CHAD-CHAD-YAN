@@ -103,7 +103,7 @@ end = False
 #drop a link from the queue
 @slash.slash(
   name="drop",
-  description="Drop a link",
+  description="Drop a link from the queue",
   options=[
     manage_commands.create_option(
       name="link",
