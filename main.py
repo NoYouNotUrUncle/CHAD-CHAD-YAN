@@ -521,7 +521,7 @@ async def on_ready():
         print(running)
         if running:
           dropLinks[key].append(link)
-          await msgCh(f"<:pingo:822111531063836712> <@&{link[0]}>, {link[2]} is now online at <{link[1]}>",int(key))
+          await msgCh(f"<@&{link[0]}>, {link[2]} is now online at <{link[1]}>",int(key))
         else: print(link[2]+" ded") #log dead teacher
       await removeLinks(key)
 
