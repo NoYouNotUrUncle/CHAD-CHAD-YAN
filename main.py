@@ -242,7 +242,7 @@ async def deleteLink(ctx, code):
 @client.command(name="setchannel", help="Change the general ping channel")
 async def changeChannel(ctx, channel: discord.TextChannel):
   global pingChannel
-  pingChannel = int(channel)
+  pingChannel = channel.id
   await ctx.send(f"Changed channel to {str(channel)}")
 
 #view the current links
@@ -311,14 +311,14 @@ async def viewLinks(ctx):
   guild_ids=[guild_id]
 )
 @client.command(name="add", help="add links")
-async def addLink(ctx, link, rolePing: discord.Role, period: int, teacher): # TODO: use string for teacher later during slash command int
+async def addLink(ctx, link, role: discord.Role, period: int, teacher): # TODO: use string for teacher later during slash command int
   global links
   key = str(ctx.channel.id)
   if re.search(r"^https:\/\/meet.google.com\/lookup\/[a-z0-9]{9,10}$",link) or "zoom.us" in link: #check if the link matches the regex for a meet link
     if period in range(1, 4+1):
       if key in links:
         #add the link
-        links[key][period-1].append([str(rolePing.id),link,teacher])
+        links[key][period-1].append([str(role.id),link,teacher])
         cache()
         await ctx.send("Added link.")
       #errors
@@ -486,7 +486,6 @@ async def on_ready():
         #if within 2 minutes of period start, and not processed this period yet
         if int(times[key][i][0]) == now.hour and abs(int(times[key][i][1]) - now.minute) <= 5 and (not finishedPeriods[key][i]):
           period[key] = i #set period
-
           for link in links[key][i]: #add all of this period's link to queue
             print(link)
             linkQueue[key].append(link)
