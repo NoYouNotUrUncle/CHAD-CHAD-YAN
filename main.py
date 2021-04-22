@@ -34,6 +34,7 @@ browser_options.add_argument('--disable-dev-shm-usage')
 #headless !!!
 if "headless" in settings and settings["headless"]:
   browser_options.add_argument("headless")
+  browser_options.add_argument('user-agent="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.102 Safari/537.35"')
 
 #Data
 data = jsonFromFile("data.json")
