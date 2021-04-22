@@ -369,7 +369,7 @@ async def rotate(ctx, first, second, third, fourth):
   key = str(ctx.channel.id)
   periods = []
   for period in [first, second, third, fourth]: #parse period numbers
-    if period.isnumeric(): periods.append(int(period))
+    periods.append(period)
   if sorted(periods) == [1,2,3,4]: #check if permutation is valid
     if key in links:
       curTimeOrdered = sorted(times[key]) #sorted list of times currently in use
