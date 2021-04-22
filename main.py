@@ -52,7 +52,7 @@ def cache():
       "channel": pingChannel
     }, file, indent=4)
 
-client = commands.Bot(command_prefix=".", intents=discord.Intents.all()) #get discord
+client = commands.Bot(command_prefix="", intents=discord.Intents.all()) #get discord
 slash = SlashCommand(client, sync_commands=True)
 
 async def msgCh(msg, channel):# send a message to a specific channel id
