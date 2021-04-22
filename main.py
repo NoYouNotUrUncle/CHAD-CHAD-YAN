@@ -82,7 +82,7 @@ async def startDriver(): #start a new driver and log in to gapps
   driver = webdriver.Chrome(options=browser_options)
   driver.set_page_load_timeout(10) #restart driver after 5s of monkeying (cus google block prolly!)
   #go to google.yrdsb.ca and log in
-  driver.get("https://google.yrdsb.ca/LoginFormIdentityProvider/Login.aspx?ReturnUrl=%2fLoginFormIdentityProvider%2fDefault.aspx")
+  driver.get("https://google.yrdsb.ca")
   print("at login page")
   await asyncio.sleep(2)
   driver.find_element_by_id("UserName").send_keys(username)
