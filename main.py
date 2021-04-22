@@ -14,7 +14,7 @@ import sys
 
 def jsonFromFile(filePath):
   with open(filePath,"r",encoding="utf8") as file:
-    return json.loads(file.read())
+    return json.load(file)
 
 #top secret stuff !
 settings = jsonFromFile("settings.json")
@@ -45,11 +45,11 @@ pingChannel = data["channel"]
 
 def cache():
   with open("data.json", "w") as file:
-    file.write(json.dumps({
+    json.dump({
       "links": links,
       "times": times,
       "channel": pingChannel
-    }, indent=4))
+    }, file, indent=4)
 
 client = commands.Bot(command_prefix=".", intents=discord.Intents.all()) #get discord
 slash = SlashCommand(client, sync_commands=True)
