@@ -1,4 +1,6 @@
-# ORZ CHAD CHAD YAN
+# BREAK IS OVER
+## STOP PLAYING GAMES
+### STOP WATCHING YOUTUBE
 Discord bot that will check if a google meet link is open and teacher is online before pinging.
 
 Currently only works in yrdsb. This may be modified by changing the *startDriver* function
